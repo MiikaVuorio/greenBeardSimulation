@@ -24,12 +24,25 @@ def setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator):
     return evolvers, trees
 
 
-def treeAction(trees):
+def treeAction(trees, warner_survival_prob):
     evolvers = []
 
     for t in trees:
         if t.isPredator:
-            continue
+            if len(t.eaters) > 1:
+                randomizer = random.random()
+                if t.eaters[0] == 'altruist':
+                    evolvers.append(t.eaters[1])
+                    if randomizer < warner_survival_prob:
+                        evolvers.append(t.eaters[0])
+                elif t.eaters[0] == 'coward' or t.eaters == 'imposter':
+                    evolvers.append(t.eaters[0])
+                elif t.eaters[0] == 'true_beard':
+                    if t.eaters[1] == 'true_beard' or t.eaters[1] == 'imposter':
+                        evolvers.append(t.eaters[1])
+                        if randomizer < warner_survival_prob:
+                            evolvers.append(t.eaters[0])
+
         else:
             eIndex = 0
             for e in t.eaters:
@@ -48,13 +61,58 @@ def breeding(evolvers):
 
     return afterMultEvolvers
 
+def addDaysData(evolvers, dataOfAlive):
+    n_of_altruists = 0
+    n_of_cowards = 0
+    n_of_truebeards = 0
+    n_of_imposters = 0
 
-def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator):
+    for e in evolvers:
+        if e.allele == 'altrusit':
+            n_of_altruists += 1
+        elif e.allele == 'coward':
+            n_of_cowards += 1
+        elif e.allele == 'true_beard':
+            n_of_truebeards += 1
+        elif e.allele == 'imposter':
+            n_of_imposters += 1
 
-    dataOfAlive = []
+    dataOfAlive['altruits'].append(n_of_altruists)
+    dataOfAlive['cowards'].append(n_of_cowards)
+    dataOfAlive['true_beards'].append(n_of_truebeards)
+    dataOfAlive['imposters'].append(n_of_imposters)
+
+def initialCount(evolvers):
+    n_of_altruists = 0
+    n_of_cowards = 0
+    n_of_truebeards = 0
+    n_of_imposters = 0
+
+    for e in evolvers:
+        if e.allele == 'altruist':
+            n_of_altruists += 1
+        elif e.allele == 'coward':
+            n_of_cowards += 1
+        elif e.allele == 'true_beard':
+            n_of_truebeards += 1
+        elif e.allele == 'imposter':
+            n_of_imposters += 1
+
+    dataOfAlive = {
+        'altruits': [n_of_altruists],
+        'cowards': [n_of_cowards],
+        'true_beards': [n_of_truebeards],
+        'imposters': [n_of_imposters]
+    }
+
+    return dataOfAlive
+
+
+def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate):
+
     evolvers, trees = setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator)
-
-    dataOfAlive.append(len(evolvers))
+    dataOfAlive = initialCount(evolvers)
+    print(dataOfAlive)
 
     for d in range(nOfDays):
 
@@ -64,36 +122,29 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator):
             trees[indexOfTree].attachEvolver(e)
 
         #Eating at tree, dying if there is a predator etc.
-        evolvers = treeAction(trees)
+        evolvers = treeAction(trees, warner_survival_rate)
 
         #Breeding: returning a new list with each item from the original duplicated
         evolvers = breeding(evolvers)
 
-
-        dataOfAlive.append(len(evolvers))
+        addDaysData(evolvers, dataOfAlive)
 
     return dataOfAlive
 
 def main():
-    nOfDays = 200
-    nOfEvolvers = 100
-    nOfTrees = 100
-    probOfPredator = 0.2
+    nOfDays = 100
+    nOfEvolvers = 500
+    nOfTrees = 450
+    probOfPredator = 0.25
+    warner_survival_rate = 0.5
 
-    data = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator)
+    populations = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate)
 
     days = [0]
     for i in range(nOfDays):
         days.append(i + 1)
 
     #boring plotting stuff
-
-    #keying (turning raw array data into dictionary form)
-    populations = {
-        'suckers': data
-    }
-
-    #making the actual plot
     fig, ax = plt.subplots()
     ax.stackplot(days, populations.values(),
                  labels=populations.keys())

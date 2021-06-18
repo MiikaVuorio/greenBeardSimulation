@@ -6,7 +6,7 @@ class Evolver:
         if allele == 'init':
             type_randomiser = random.random()
             if type_randomiser < 0.25:
-                self.allele = 'sucker'
+                self.allele = 'altruist'
             elif type_randomiser < 0.5:
                 self.allele = 'coward'
             elif type_randomiser < 0.75:
