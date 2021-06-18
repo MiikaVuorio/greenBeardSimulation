@@ -1,11 +1,9 @@
 import random
 
 class Evolver:
-#    eIterator = 0
+
     def __init__(self):
-#        self.eID = Evolver.eIterator
-#        Evolver.eIterator += 1
-        self.feeding = False
+        self.fed = False
         self.onTree = -1
         self.isAlive = True
 
@@ -14,11 +12,10 @@ class Evolver:
 
 
 class Tree:
-#    tIterator = 0
+
     def __init__(self, probOfPredator):
         self.eaters = []
-#       self.tID = Tree.tIterator
-#        Tree.tIterator += 1
+
         if random.random() < probOfPredator:
             self.isPredator = True
         else:

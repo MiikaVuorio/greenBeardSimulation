@@ -1,84 +1,93 @@
 import math
 import numpy as np
 import random
-import matplotlib
+from matplotlib import pyplot as plt
 import organisms
 
-evolvers = []
-trees = []
-dataOfAlive = []
-nOfDays = 9
-nOfEvolvers = 100
-nOfTrees = 100
-probOfPredator = 0
 
-for i in range(nOfEvolvers):
-    e = organisms.Evolver()
-    evolvers.append(e)
-dataOfAlive.append(len(evolvers))
+def setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator):
 
-for i in range(nOfTrees):
-    t = organisms.Tree(probOfPredator)
-    trees.append(t)
+    #set up evolvers
+    evolvers = []
 
-for d in range(nOfDays):
+    for i in range(nOfEvolvers):
+        e = organisms.Evolver()
+        evolvers.append(e)
 
-    #Attach each evolver to a randomly chosen tree
-    # lives = []
-    for e in evolvers:
-        indexOfTree = random.randint(0, len(trees) - 1)
-        trees[indexOfTree].attachEvolver(e)
-    #     lives.append(e.isAlive)
-    # print(lives)
+    #set up trees
+    trees = []
 
-    #Tree action
-    killed = 0
-    nonPredCounts = 0
+    for i in range(nOfTrees):
+        t = organisms.Tree(probOfPredator)
+        trees.append(t)
+
+    return evolvers, trees
+
+
+def treeAction(trees):
+    evolvers = []
+
     for t in trees:
-#        lives = []
-#        for e in t.eaters:
-#           lives.append(e.isAlive)
-#       print(lives)
-#         if t.isPredator:
-#             for e in t.eaters:
-#                 e.kill()
-#         else:
-#             indexOfEater = 0
-#             for e in t.eaters:
-#                 if indexOfEater > 1:
-#                     killed += 1
-#                     e.kill()
-#                 #print(indexOfEater)
-#                 indexOfEater += 1
-#         t.eatersLeave()
-        if len(t.eaters) > 1:
-            for i in range(len(t.eaters) - 1):
-                evolvers.pop(0)
+        if t.isPredator:
+            continue
+        else:
+            eIndex = 0
+            for e in t.eaters:
+                if eIndex < 1:
+                    evolvers.append(e)
+                    eIndex += 1
         t.eatersLeave()
 
-    #Clean evolvers list
-    stillAliveEvolvers = []
-    nOfAlive = 0
-    for e in evolvers:
-        #print(e.isAlive)
-        if e.isAlive:
-            stillAliveEvolvers.append(e)
-            nOfAlive += 1
-    #print(nOfAlive)
-    evolvers = stillAliveEvolvers
-    #print(len(evolvers))
-    #following line for debug
-    #print(f"pre-breeding: {len(evolvers)}")
+    return evolvers
 
-    #Breeding
+def breeding(evolvers):
     afterMultEvolvers = []
     for e in evolvers:
         afterMultEvolvers.append(e)
         afterMultEvolvers.append(e)
-    evolvers = afterMultEvolvers
 
-    #following line for debug
-    #print(f"post-breeding: {len(evolvers)}")
+    return afterMultEvolvers
+
+
+def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator):
+
+    dataOfAlive = []
+    evolvers, trees = setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator)
+
     dataOfAlive.append(len(evolvers))
 
-print(dataOfAlive)
+    for d in range(nOfDays):
+
+        #Attach each evolver to a randomly chosen tree
+        for e in evolvers:
+            indexOfTree = random.randint(0, len(trees) - 1)
+            trees[indexOfTree].attachEvolver(e)
+
+        #Eating at tree, dying if there is a predator etc.
+        evolvers = treeAction(trees)
+
+        #Breeding: returning a new list with each item from the original duplicated
+        evolvers = breeding(evolvers)
+
+
+        dataOfAlive.append(len(evolvers))
+
+    return dataOfAlive
+
+def main():
+    nOfDays = 500
+    nOfEvolvers = 100
+    nOfTrees = 180
+    probOfPredator = 0.4
+
+    data = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator)
+
+
+    days = [0]
+    for i in range(nOfDays):
+        days.append(i+1)
+
+    plt.plot(days, data)
+    plt.show()
+
+main()
