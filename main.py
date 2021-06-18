@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import random
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import organisms
 
 
@@ -75,19 +75,33 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator):
     return dataOfAlive
 
 def main():
-    nOfDays = 500
+    nOfDays = 200
     nOfEvolvers = 100
-    nOfTrees = 180
-    probOfPredator = 0.4
+    nOfTrees = 100
+    probOfPredator = 0.2
 
     data = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator)
 
-
     days = [0]
     for i in range(nOfDays):
-        days.append(i+1)
+        days.append(i + 1)
 
-    plt.plot(days, data)
+    #boring plotting stuff
+
+    #keying (turning raw array data into dictionary form)
+    populations = {
+        'suckers': data
+    }
+
+    #making the actual plot
+    fig, ax = plt.subplots()
+    ax.stackplot(days, populations.values(),
+                 labels=populations.keys())
+    ax.legend(loc='upper left')
+    ax.set_title('Evolver populations')
+    ax.set_xlabel('Day')
+    ax.set_ylabel('Number of evolvers in system')
+
     plt.show()
 
 main()
