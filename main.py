@@ -23,7 +23,12 @@ def setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator):
 
     return evolvers, trees
 
-def save(food_source):
+
+def warn(food_source):
+    pass
+
+
+def no_warn(food_source):
     pass
 
 
@@ -179,11 +184,10 @@ def average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, p
             all_instances[allele][index] = avg_value
             index += 1
 
-
-
     return all_instances
 
 def plot_stackplot(data, x_values):
+
     # boring plotting stuff
     fig, ax = plt.subplots()
     ax.stackplot(x_values, data.values(),
@@ -195,39 +199,34 @@ def plot_stackplot(data, x_values):
 
     plt.show()
 
+def constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition):
 
-def main():
-    n_of_instances = 20
-    n_of_days = 200
-    n_of_evolvers = 200
-    n_of_trees = 180
-    prob_of_predator = 0.3
-    warner_survival_rate = 0.5
-    prob_imposter_recognition = 0
+    populations = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                       warner_survival_rate, prob_imposter_recognition)
 
-    populations = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition)
-
-    #creating an array of days for the x-axis of the plot
+    # creating an array of days for the x-axis of the plot
     days = [0]
     for i in range(n_of_days):
         days.append(i + 1)
 
     plot_stackplot(populations, days)
 
+
+def variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                            warner_survival_rate, n_of_data_points):
     test_values = []
-    n_of_data_points = 10
     for i in range(n_of_data_points):
-        test_values.append((i+1)/n_of_data_points)
+        test_values.append((i + 1) / n_of_data_points)
 
     per_of_true_beards = []
     for recognition_prob in test_values:
         a_population = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
-                             warner_survival_rate, recognition_prob)
+                                            warner_survival_rate, recognition_prob)
         n_of_green_beards = a_population["true_beards"][-1]
         total_of_evolvers = 0
         for allele in a_population:
             total_of_evolvers += a_population[allele][-1]
-        per_of_true_beards.append(n_of_green_beards/total_of_evolvers)
+        per_of_true_beards.append(n_of_green_beards / total_of_evolvers)
         print(recognition_prob)
 
     plt.plot(test_values, per_of_true_beards)
@@ -236,6 +235,65 @@ def main():
     plt.title(f'Propogation of the Greenbeard trait by the end of {n_of_days} day(s)')
     plt.show()
 
+def get_shared_variables():
+    n_of_instances = int(input("n_of_instances: "))
+    n_of_days = int(input("n_of_days: "))
+    n_of_evolvers = int(input("n_of_evolvers: "))
+    n_of_trees = int(input("n_of_trees: "))
+    prob_of_predator = float(input("prob_of_predator(value between 0 and 1): "))
+    warner_survival_rate = float(input("warner_survival_rate(value between 0 and 1): "))
 
+
+    return n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate
+
+def command_line():
+    print('''
+input q to quit
+input 1 to run simulation(s) with constant values
+input 2 to run simulations with variable probabilities for greenbeards to recognize an imposter
+input 3 to run previous simulation with constant values
+more information can be found in the readme and at https://github.com/MiikaVuorio/greenBeardSimulation
+    ''')
+
+    while True:
+
+        command = input("\ninput: ")
+
+        if command.lower() == "q":
+            break
+        elif command == "1":
+            n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate = get_shared_variables()
+            prob_imposter_recognition = float(input("prob_imposter_recognition(value between 0 and 1): "))
+
+            constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                          warner_survival_rate, prob_imposter_recognition)
+        elif command == "2":
+            n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate = get_shared_variables()
+            n_of_data_points = int(input("n_of_data_points: "))
+
+            variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
+                                                     prob_of_predator,warner_survival_rate, n_of_data_points)
+        elif command == "3":
+            constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                          warner_survival_rate, prob_imposter_recognition)
+
+def run_with_code():
+    n_of_instances = 20
+    n_of_days = 200
+    n_of_evolvers = 200
+    n_of_trees = 180
+    prob_of_predator = 0.3
+    warner_survival_rate = 0.5
+    prob_imposter_recognition = 0
+    n_of_data_points = 20
+
+    constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                  warner_survival_rate, prob_imposter_recognition)
+    variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
+                                             prob_of_predator, warner_survival_rate, n_of_data_points)
+
+def main():
+    command_line()
+    run_with_code()
 
 main()
