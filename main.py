@@ -31,17 +31,19 @@ def treeAction(trees, warner_survival_prob):
         if t.isPredator:
             if len(t.eaters) > 1:
                 randomizer = random.random()
-                if t.eaters[0] == 'altruist':
-                    evolvers.append(t.eaters[1])
-                    if randomizer < warner_survival_prob:
-                        evolvers.append(t.eaters[0])
-                elif t.eaters[0] == 'coward' or t.eaters == 'imposter':
+                if t.eaters[1].allele == 'altruist':
                     evolvers.append(t.eaters[0])
-                elif t.eaters[0] == 'true_beard':
-                    if t.eaters[1] == 'true_beard' or t.eaters[1] == 'imposter':
+                    if randomizer < warner_survival_prob: 
                         evolvers.append(t.eaters[1])
+                elif t.eaters[1].allele == 'coward' or t.eaters[1].allele == 'imposter':
+                    evolvers.append(t.eaters[1])
+                elif t.eaters[1].allele == 'true_beard':
+                    if t.eaters[0].allele == 'true_beard' or t.eaters[0].allele == 'imposter':
+                        evolvers.append(t.eaters[0])
                         if randomizer < warner_survival_prob:
-                            evolvers.append(t.eaters[0])
+                            evolvers.append(t.eaters[1])
+                    else:
+                        evolvers.append(t.eaters[1])
 
         else:
             eIndex = 0
@@ -62,13 +64,14 @@ def breeding(evolvers):
     return afterMultEvolvers
 
 def addDaysData(evolvers, dataOfAlive):
+    freshData = dataOfAlive
     n_of_altruists = 0
     n_of_cowards = 0
     n_of_truebeards = 0
     n_of_imposters = 0
 
     for e in evolvers:
-        if e.allele == 'altrusit':
+        if e.allele == 'altruist':
             n_of_altruists += 1
         elif e.allele == 'coward':
             n_of_cowards += 1
@@ -77,10 +80,12 @@ def addDaysData(evolvers, dataOfAlive):
         elif e.allele == 'imposter':
             n_of_imposters += 1
 
-    dataOfAlive['altruits'].append(n_of_altruists)
-    dataOfAlive['cowards'].append(n_of_cowards)
-    dataOfAlive['true_beards'].append(n_of_truebeards)
-    dataOfAlive['imposters'].append(n_of_imposters)
+    freshData['altruists'].append(n_of_altruists)
+    freshData['cowards'].append(n_of_cowards)
+    freshData['true_beards'].append(n_of_truebeards)
+    freshData['imposters'].append(n_of_imposters)
+
+    return freshData
 
 def initialCount(evolvers):
     n_of_altruists = 0
@@ -99,7 +104,7 @@ def initialCount(evolvers):
             n_of_imposters += 1
 
     dataOfAlive = {
-        'altruits': [n_of_altruists],
+        'altruists': [n_of_altruists],
         'cowards': [n_of_cowards],
         'true_beards': [n_of_truebeards],
         'imposters': [n_of_imposters]
@@ -112,11 +117,11 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_su
 
     evolvers, trees = setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator)
     dataOfAlive = initialCount(evolvers)
-    print(dataOfAlive)
 
     for d in range(nOfDays):
 
         #Attach each evolver to a randomly chosen tree
+        random.shuffle(evolvers)
         for e in evolvers:
             indexOfTree = random.randint(0, len(trees) - 1)
             trees[indexOfTree].attachEvolver(e)
@@ -127,19 +132,22 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_su
         #Breeding: returning a new list with each item from the original duplicated
         evolvers = breeding(evolvers)
 
-        addDaysData(evolvers, dataOfAlive)
+        dataOfAlive = addDaysData(evolvers, dataOfAlive)
 
     return dataOfAlive
+
+
 
 def main():
     nOfDays = 100
     nOfEvolvers = 500
     nOfTrees = 450
     probOfPredator = 0.25
-    warner_survival_rate = 0.5
+    warner_survival_rate = 0
 
     populations = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate)
 
+    #creating an array of days for the x-axis of the plot
     days = [0]
     for i in range(nOfDays):
         days.append(i + 1)
