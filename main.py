@@ -87,7 +87,8 @@ def addDaysData(evolvers, dataOfAlive):
 
     return freshData
 
-def initialCount(evolvers):
+def initial_count(evolvers):
+
     n_of_altruists = 0
     n_of_cowards = 0
     n_of_truebeards = 0
@@ -116,7 +117,7 @@ def initialCount(evolvers):
 def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate):
 
     evolvers, trees = setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator)
-    dataOfAlive = initialCount(evolvers)
+    dataOfAlive = initial_count(evolvers)
 
     for d in range(nOfDays):
 
@@ -136,31 +137,69 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_su
 
     return dataOfAlive
 
+def average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate):
+
+    all_instances = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+    #converting all_instances values into lists of lists
+    for allele in all_instances:
+        index = 0
+        for num in all_instances[allele]:
+            all_instances[allele][index] = [all_instances[allele][index]]
+            index += 1
 
 
-def main():
-    nOfDays = 100
-    nOfEvolvers = 500
-    nOfTrees = 450
-    probOfPredator = 0.25
-    warner_survival_rate = 0
+    for i in range(n_of_instances - 1):
+        merge_instance = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+        for allele in all_instances:
+            index = 0
+            for values in all_instances[allele]:
+                values.append(merge_instance[allele][index])
+                index += 1
 
-    populations = simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate)
+    #turning back into a single array with averaged values
+    for allele in all_instances:
+        index = 0
+        for values in all_instances[allele]:
+            total = 0
+            for value in values:
+                total += value
+            avg_value = total / len(values)
+            all_instances[allele][index] = avg_value
+            index += 1
 
-    #creating an array of days for the x-axis of the plot
-    days = [0]
-    for i in range(nOfDays):
-        days.append(i + 1)
 
-    #boring plotting stuff
+
+    return all_instances
+
+def plot_stackplot(data, x_values):
+    # boring plotting stuff
     fig, ax = plt.subplots()
-    ax.stackplot(days, populations.values(),
-                 labels=populations.keys())
+    ax.stackplot(x_values, data.values(),
+                 labels=data.keys())
     ax.legend(loc='upper left')
     ax.set_title('Evolver populations')
     ax.set_xlabel('Day')
     ax.set_ylabel('Number of evolvers in system')
 
     plt.show()
+
+
+def main():
+    n_of_instances = 1
+    n_of_days = 100
+    n_of_evolvers = 500
+    n_of_trees = 450
+    prob_of_predator = 0.25
+    warner_survival_rate = 0
+
+    populations = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+
+    #creating an array of days for the x-axis of the plot
+    days = [0]
+    for i in range(n_of_days):
+        days.append(i + 1)
+
+    plot_stackplot(populations, days)
+
 
 main()
