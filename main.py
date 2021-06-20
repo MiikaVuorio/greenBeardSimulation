@@ -18,15 +18,19 @@ def setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator):
     trees = []
 
     for i in range(nOfTrees):
-        t = organisms.Tree(probOfPredator)
+        t = organisms.Food_source(probOfPredator)
         trees.append(t)
 
     return evolvers, trees
 
+def save(food_source):
+    pass
 
-def treeAction(trees, warner_survival_prob):
+
+def treeAction(trees, warner_survival_prob, prob_imposter_recognition):
     evolvers = []
 
+    #note to self: to improve clarity could add warn and no_warn functions
     for t in trees:
         if t.isPredator:
             if len(t.eaters) > 1:
@@ -38,10 +42,18 @@ def treeAction(trees, warner_survival_prob):
                 elif t.eaters[1].allele == 'coward' or t.eaters[1].allele == 'imposter':
                     evolvers.append(t.eaters[1])
                 elif t.eaters[1].allele == 'true_beard':
-                    if t.eaters[0].allele == 'true_beard' or t.eaters[0].allele == 'imposter':
+                    if t.eaters[0].allele == 'true_beard':
                         evolvers.append(t.eaters[0])
                         if randomizer < warner_survival_prob:
                             evolvers.append(t.eaters[1])
+                    elif t.eaters[0].allele == 'imposter':
+                        recognition_randomizer = random.random()
+                        if recognition_randomizer < prob_imposter_recognition:
+                            evolvers.append(t.eaters[1])
+                        else:
+                            evolvers.append(t.eaters[0])
+                            if randomizer < warner_survival_prob:
+                                evolvers.append(t.eaters[1])
                     else:
                         evolvers.append(t.eaters[1])
 
@@ -114,7 +126,7 @@ def initial_count(evolvers):
     return dataOfAlive
 
 
-def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate):
+def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_survival_rate, prob_imposter_recognition = 0):
 
     evolvers, trees = setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator)
     dataOfAlive = initial_count(evolvers)
@@ -128,7 +140,7 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_su
             trees[indexOfTree].attachEvolver(e)
 
         #Eating at tree, dying if there is a predator etc.
-        evolvers = treeAction(trees, warner_survival_rate)
+        evolvers = treeAction(trees, warner_survival_rate, prob_imposter_recognition)
 
         #Breeding: returning a new list with each item from the original duplicated
         evolvers = breeding(evolvers)
@@ -137,9 +149,9 @@ def simulationInstance(nOfDays, nOfEvolvers, nOfTrees, probOfPredator, warner_su
 
     return dataOfAlive
 
-def average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate):
+def average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition = 0):
 
-    all_instances = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+    all_instances = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition)
     #converting all_instances values into lists of lists
     for allele in all_instances:
         index = 0
@@ -149,7 +161,7 @@ def average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, p
 
 
     for i in range(n_of_instances - 1):
-        merge_instance = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+        merge_instance = simulationInstance(n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition)
         for allele in all_instances:
             index = 0
             for values in all_instances[allele]:
@@ -185,14 +197,15 @@ def plot_stackplot(data, x_values):
 
 
 def main():
-    n_of_instances = 1
-    n_of_days = 100
-    n_of_evolvers = 500
-    n_of_trees = 450
-    prob_of_predator = 0.25
-    warner_survival_rate = 0
+    n_of_instances = 20
+    n_of_days = 200
+    n_of_evolvers = 200
+    n_of_trees = 180
+    prob_of_predator = 0.3
+    warner_survival_rate = 0.5
+    prob_imposter_recognition = 0
 
-    populations = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate)
+    populations = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate, prob_imposter_recognition)
 
     #creating an array of days for the x-axis of the plot
     days = [0]
@@ -200,6 +213,29 @@ def main():
         days.append(i + 1)
 
     plot_stackplot(populations, days)
+
+    test_values = []
+    n_of_data_points = 10
+    for i in range(n_of_data_points):
+        test_values.append((i+1)/n_of_data_points)
+
+    per_of_true_beards = []
+    for recognition_prob in test_values:
+        a_population = average_of_instances(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                             warner_survival_rate, recognition_prob)
+        n_of_green_beards = a_population["true_beards"][-1]
+        total_of_evolvers = 0
+        for allele in a_population:
+            total_of_evolvers += a_population[allele][-1]
+        per_of_true_beards.append(n_of_green_beards/total_of_evolvers)
+        print(recognition_prob)
+
+    plt.plot(test_values, per_of_true_beards)
+    plt.xlabel('Probability of a Greenbeard Recognizing an Imposter')
+    plt.ylabel('Ratio of Greenbeards to total population')
+    plt.title(f'Propogation of the Greenbeard trait by the end of {n_of_days} day(s)')
+    plt.show()
+
 
 
 main()

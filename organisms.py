@@ -16,7 +16,7 @@ class Evolver:
         else:
             self.allele = allele
 
-class Tree:
+class Food_source:
 
     def __init__(self, probOfPredator):
         self.eaters = []
