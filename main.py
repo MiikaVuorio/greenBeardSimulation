@@ -3,6 +3,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import organisms
+import scipy.optimize as opt
 
 
 def setUpOrganisms(nOfEvolvers, nOfTrees, probOfPredator):
@@ -212,8 +213,8 @@ def constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of
     plot_stackplot(populations, days)
 
 
-def variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
-                                            warner_survival_rate, n_of_data_points):
+def variable_imposter_recognition(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+                                  warner_survival_rate, n_of_data_points):
     test_values = []
     for i in range(n_of_data_points):
         test_values.append((i + 1) / n_of_data_points)
@@ -228,12 +229,14 @@ def variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evo
             total_of_evolvers += a_population[allele][-1]
         per_of_true_beards.append(n_of_green_beards / total_of_evolvers)
         print(recognition_prob)
-
+    print(test_values)
+    print(per_of_true_beards)
     plt.plot(test_values, per_of_true_beards)
     plt.xlabel('Probability of a Greenbeard Recognizing an Imposter')
     plt.ylabel('Ratio of Greenbeards to total population')
     plt.title(f'Propogation of the Greenbeard trait by the end of {n_of_days} day(s)')
     plt.show()
+
 
 def get_shared_variables():
     n_of_instances = int(input("n_of_instances: "))
@@ -252,6 +255,7 @@ input q to quit
 input 1 to run simulation(s) with constant values
 input 2 to run simulations with variable probabilities for greenbeards to recognize an imposter
 input 3 to run previous simulation with constant values
+input 4 to run the logistic regression on the data used in the paper
 more information can be found in the readme and at https://github.com/MiikaVuorio/greenBeardSimulation
     ''')
 
@@ -271,15 +275,17 @@ more information can be found in the readme and at https://github.com/MiikaVuori
             n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator, warner_survival_rate = get_shared_variables()
             n_of_data_points = int(input("n_of_data_points: "))
 
-            variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
-                                                     prob_of_predator,warner_survival_rate, n_of_data_points)
+            variable_imposter_recognition(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
+                                          prob_of_predator, warner_survival_rate, n_of_data_points)
         elif command == "3":
             constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
                                           warner_survival_rate, prob_imposter_recognition)
+        elif command == "4":
+            print_dat_curve()
 
 def run_with_code():
-    n_of_instances = 20
-    n_of_days = 200
+    n_of_instances = 40
+    n_of_days = 600
     n_of_evolvers = 200
     n_of_trees = 180
     prob_of_predator = 0.3
@@ -287,13 +293,44 @@ def run_with_code():
     prob_imposter_recognition = 0
     n_of_data_points = 20
 
-    constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
-                                  warner_survival_rate, prob_imposter_recognition)
-    variable_imposter_recognition_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
-                                             prob_of_predator, warner_survival_rate, n_of_data_points)
+    # constant_variables_simulation(n_of_instances, n_of_days, n_of_evolvers, n_of_trees, prob_of_predator,
+    #                               warner_survival_rate, prob_imposter_recognition)
+    # variable_imposter_recognition(n_of_instances, n_of_days, n_of_evolvers, n_of_trees,
+    #                               prob_of_predator, warner_survival_rate, n_of_data_points)
+
+    #print_dat_curve()
+
+def logistic_fun(x, L, k, x0):
+    return L / (1 + np.exp(-k*(x-x0)))
+
+def fitted_logisticfunction(x, y):
+    return opt.curve_fit(logistic_fun, x, y)
+
+def print_dat_curve():
+    x = []
+    for i in range(20):
+        x.append((i + 1) * 0.05)
+    y = [0, 0, 0.027871215761653, 0.0340136054421768, 0, 0, 0, 0.0327316486161251, 0.102521408182683, 0.15799477310525,
+         0.292660963529941, 0.425441538117594, 0.532959931064196, 0.692146596858638, 0.604842105263158,
+         0.800441678377835, 0.839365595770638, 0.788608338226658, 0.879351265822784, 0.903376927581495]
+    popt, pcov = fitted_logisticfunction(x, y)
+    plt.scatter(x, y, label='Logistic function')
+    plt.plot(x, logistic_fun(x, *popt), 'r-', label='Fitted function')
+    plt.legend()
+    plt.show()
+    print("The values for the logistic regression: " + popt)
+    perr = np.sqrt(np.diag(pcov))
+    #print(perr)
+
+    print("Mean Squared Error: ", np.mean((y - logistic_fun(x, *popt)) ** 2))
+
+    ss_res = np.dot((y - logistic_fun(x, *popt)), (y - logistic_fun(x, *popt)))
+    ymean = np.mean(y)
+    ss_tot = np.dot((y - ymean), (y - ymean))
+    print("R^2:", 1 - ss_res / ss_tot)
 
 def main():
     command_line()
-    run_with_code()
+    #run_with_code()
 
 main()
